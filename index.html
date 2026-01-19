@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Driver Monitor v15 (Final)</title>
+    <title>Driver Monitor v18 (Sync Fixed)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- MediaPipe Libraries -->
@@ -24,17 +24,13 @@
             border-radius: 16px;
         }
 
-        /* --- MONITOR BAR (TOP) --- */
+        /* --- MONITOR BAR --- */
         .monitor-bar {
             position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
             width: 95%; max-width: 600px; z-index: 40; padding: 15px;
-            display: flex; gap: 20px; transition: opacity 0.5s;
-            align-items: stretch;
+            display: flex; gap: 20px; transition: opacity 0.5s; align-items: stretch;
         }
-
-        /* LEFT: EYE MONITOR (Fix layout flex) */
         .section-eyes { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
-        
         .bar-track {
             height: 20px; width: 100%; border-radius: 10px; margin: 5px 0;
             background: linear-gradient(to right, #ef4444 0%, #ef4444 30%, #eab308 45%, #eab308 55%, #22c55e 70%, #22c55e 100%);
@@ -42,15 +38,12 @@
         }
         .bar-cursor {
             position: absolute; top: 0; bottom: 0; width: 6px; background: #fff;
-            box-shadow: 0 0 10px #fff; transition: left 0.1s linear; z-index: 10;
-            border: 1px solid #000;
+            box-shadow: 0 0 10px #fff; transition: left 0.1s linear; z-index: 10; border: 1px solid #000;
         }
         .thresh-line {
             position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,0.8); 
             border-left: 1px dashed black; z-index: 5;
         }
-
-        /* Fatigue Dots */
         .fatigue-wrapper { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
         .fatigue-label { font-size: 10px; color: #94a3b8; font-weight: bold; }
         .fatigue-indicator { flex: 1; height: 6px; background: #334155; border-radius: 3px; display: flex; overflow: hidden; }
@@ -59,13 +52,15 @@
 
         /* RIGHT: HEAD COMPASS */
         .section-head { 
-            width: 70px; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 15px;
+            width: 80px; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 15px;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
         .head-compass {
             width: 50px; height: 50px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3);
-            background: rgba(0,0,0,0.3); position: relative; margin-top: 5px;
+            background: rgba(0,0,0,0.3); position: relative; margin-top: 5px; transition: border-color 0.2s;
         }
+        .head-compass.warning { border-color: #f97316; background: rgba(249, 115, 22, 0.2); }
+        
         .head-safe-zone {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 20px; height: 20px; border-radius: 50%;
@@ -77,7 +72,7 @@
             box-shadow: 0 0 5px #3b82f6; transition: all 0.1s;
         }
 
-        /* --- OVERLAYS --- */
+        /* --- ALERTS --- */
         .alarm-screen {
             position: absolute; inset: 0; background: rgba(220, 38, 38, 0.95); z-index: 100;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -108,31 +103,18 @@
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .settings-menu.open { transform: translateY(0); opacity: 1; pointer-events: auto; }
-        
-        .menu-item {
-            background: rgba(255,255,255,0.05); border: none; color: white; text-align: left;
-            padding: 12px; border-radius: 8px; font-size: 14px; cursor: pointer;
-            transition: background 0.2s; display: flex; align-items: center; gap: 10px;
-        }
+        .menu-item { background: rgba(255,255,255,0.05); border: none; color: white; padding: 12px; border-radius: 8px; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 10px; }
         .menu-item:hover { background: rgba(255,255,255,0.1); }
         .menu-item.danger { color: #f87171; background: rgba(239, 68, 68, 0.1); } 
-        .menu-item.danger:hover { background: rgba(239, 68, 68, 0.2); }
         .setting-group { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; }
-        .setting-label { font-size: 12px; color: #94a3b8; display: flex; justify-content: space-between; margin-bottom: 5px; }
-        .setting-value { color: #3b82f6; font-weight: bold; }
         input[type=range] { width: 100%; height: 4px; background: #475569; border-radius: 2px; appearance: none; }
         input[type=range]::-webkit-slider-thumb { appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #3b82f6; cursor: pointer; }
 
         /* --- CONTROLS --- */
-        .btn-round {
-            width: 50px; height: 50px; border-radius: 25px;
-            background: rgba(30, 41, 59, 0.9); border: 1px solid #475569;
-            color: white; font-size: 20px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: transform 0.1s, background 0.2s;
-        }
-        .btn-round:hover { background: #3b82f6; border-color: #3b82f6; }
-        .btn-round:active { transform: scale(0.95); }
+        .btn-round { width: 50px; height: 50px; border-radius: 25px; background: rgba(30, 41, 59, 0.9); border: 1px solid #475569; color: white; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; }
+        .btn-action { width: 100%; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: transform 0.1s; }
+        .btn-blue { background: #3b82f6; color: white; }
+        .btn-green { background: #22c55e; color: white; }
 
         /* --- TRAINING --- */
         .top-instruction-box {
@@ -140,26 +122,11 @@
             width: 90%; max-width: 450px; z-index: 50; padding: 20px;
             text-align: center; display: flex; flex-direction: column; gap: 10px;
         }
-        .countdown-overlay {
-            position: absolute; inset: 0; z-index: 60; background: rgba(0,0,0,0.1);
-            display: flex; align-items: center; justify-content: center; pointer-events: none;
-        }
-        .count-num {
-            font-size: 8rem; font-weight: 900; color: #fff; text-shadow: 0 0 30px rgba(0,0,0,0.8);
-            animation: popIn 0.8s;
-        }
+        .countdown-overlay { position: absolute; inset: 0; z-index: 60; background: rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; pointer-events: none; }
+        .count-num { font-size: 8rem; font-weight: 900; color: #fff; text-shadow: 0 0 30px rgba(0,0,0,0.8); animation: popIn 0.8s; }
         @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        
-        .scan-line {
-            position: absolute; width: 100%; height: 2px; background: #00ffff;
-            box-shadow: 0 0 10px #00ffff; opacity: 0.6; animation: scanUpDown 2s infinite linear; pointer-events: none;
-        }
+        .scan-line { position: absolute; width: 100%; height: 2px; background: #00ffff; box-shadow: 0 0 10px #00ffff; opacity: 0.6; animation: scanUpDown 2s infinite linear; pointer-events: none; }
         @keyframes scanUpDown { 0% { top: 10%; } 100% { top: 90%; } }
-
-        .btn-action { width: 100%; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: transform 0.1s; }
-        .btn-action:active { transform: scale(0.98); }
-        .btn-blue { background: #3b82f6; color: white; }
-        .btn-green { background: #22c55e; color: white; }
         .progress-track { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin-top: 5px; }
         .progress-fill { height: 100%; background: #3b82f6; width: 0%; transition: width 0.1s linear; }
     </style>
@@ -169,7 +136,6 @@
     <div class="camera-wrapper">
         <video class="input_video" style="display: none;"></video>
         <canvas class="output_canvas"></canvas>
-        
         <div id="scanner" class="absolute inset-0 hidden pointer-events-none"><div class="scan-line"></div></div>
         <div id="countdownBox" class="countdown-overlay hidden"><div id="countNum" class="count-num">3</div></div>
 
@@ -188,33 +154,23 @@
             </div>
         </div>
 
-        <!-- MAIN UI -->
+        <!-- MONITOR BAR -->
         <div id="monitorBar" class="glass-panel monitor-bar opacity-0 pointer-events-none">
-            <!-- Left: Eyes -->
             <div class="section-eyes">
-                <div class="flex justify-between text-xs font-bold text-gray-200 px-1">
-                    <span>⚠️ NHẮM</span><span>✅ MỞ</span>
-                </div>
+                <div class="flex justify-between text-xs font-bold text-gray-200 px-1"><span>⚠️ NHẮM</span><span>✅ MỞ</span></div>
                 <div class="bar-track">
                     <div id="threshLine" class="thresh-line" style="left: 40%"></div>
                     <div id="barCursor" class="bar-cursor" style="left: 90%"></div>
                 </div>
-                <!-- Fatigue Dots -->
                 <div class="fatigue-wrapper">
                     <span class="fatigue-label">MỆT MỎI:</span>
-                    <div class="fatigue-indicator">
-                        <div id="dot1" class="fatigue-dot"></div>
-                        <div id="dot2" class="fatigue-dot"></div>
-                        <div id="dot3" class="fatigue-dot"></div>
-                    </div>
+                    <div class="fatigue-indicator"><div id="dot1" class="fatigue-dot"></div><div id="dot2" class="fatigue-dot"></div><div id="dot3" class="fatigue-dot"></div></div>
                 </div>
                 <div id="monitorStatus" class="text-center mt-2 text-sm font-bold text-green-400">Đang hoạt động</div>
             </div>
-            
-            <!-- Right: Compass -->
             <div class="section-head">
-                <div class="text-[9px] text-gray-400 font-bold mb-1">HƯỚNG ĐẦU</div>
-                <div class="head-compass">
+                <div class="text-[9px] text-gray-400 font-bold mb-1">LA BÀN</div>
+                <div id="headCompass" class="head-compass">
                     <div class="head-safe-zone"></div>
                     <div id="headDot" class="head-dot"></div>
                 </div>
@@ -224,8 +180,8 @@
         <!-- TRAINING UI -->
         <div id="trainingContainer">
             <div id="stepWelcome" class="glass-panel top-instruction-box">
-                <h1 class="text-xl font-bold text-blue-400">Driver Monitor v15</h1>
-                <p class="text-gray-300 text-xs">Final Stable Version</p>
+                <h1 class="text-xl font-bold text-blue-400">Driver Monitor v18</h1>
+                <p class="text-gray-300 text-xs">Sync Fixed & Memory Patch</p>
                 <div id="foundDataBox" class="hidden bg-green-500/20 border border-green-500/50 p-2 rounded text-green-300 text-xs text-left">✨ Đã có dữ liệu cũ.</div>
                 <div class="flex gap-2 w-full mt-2">
                     <button id="btnUseOld" class="btn-action btn-green hidden text-sm">Dùng dữ liệu cũ</button>
@@ -234,11 +190,11 @@
             </div>
             
             <div id="stepInstructOpen" class="glass-panel top-instruction-box hidden">
-                <div class="flex items-center justify-center gap-2"><span class="text-2xl">👀</span><h2 class="text-lg font-bold">Bước 1: Mắt Mở</h2></div>
+                <div class="flex items-center justify-center gap-2"><span class="text-2xl">🚗</span><h2 class="text-lg font-bold">Bước 1: Tư Thế Lái</h2></div>
                 <div class="text-left text-xs text-gray-300 bg-black/20 p-3 rounded">
-                    <p class="text-yellow-400 font-bold mb-1">LƯU Ý:</p>
-                    <p>1. Giây 0-1: <b class="text-white">NHÌN THẲNG</b> (Để chỉnh la bàn).</p>
-                    <p>2. Giây 2-5: <b class="text-white">GIỮ MẮT MỞ</b> (Để chỉnh thanh mắt).</p>
+                    <p class="text-yellow-400 font-bold mb-1">QUAN TRỌNG:</p>
+                    <p>• Ngồi tư thế lái xe, <b class="text-white">mắt nhìn thẳng ra đường</b>.</p>
+                    <p>• KHÔNG nhìn điện thoại trong 2s đầu.</p>
                 </div>
                 <button id="btnStartOpen" class="btn-action btn-blue">Bắt đầu Đo (5s)</button>
             </div>
@@ -251,29 +207,29 @@
             
             <div id="stepProcessing" class="glass-panel top-instruction-box hidden">
                 <h2 class="text-lg font-bold text-blue-400" id="processTitle">Đang học...</h2>
-                <div class="progress-track"><div id="progressBar" class="progress-fill"></div></div>
+                <div class="text-xs text-yellow-400 font-bold mt-1 hidden" id="calibMsg">NHÌN THẲNG ĐƯỜNG!</div>
+                <div class="progress-track"><div id="progressBar" class="progress-fill" style="width: 0%"></div></div>
             </div>
             
             <div id="stepSuccess" class="glass-panel top-instruction-box hidden">
                 <h2 class="text-lg font-bold">Hoàn tất!</h2>
-                <div class="text-xs text-gray-400">Hệ thống đã sẵn sàng.</div>
+                <div class="text-xs text-gray-400">Hệ thống đã ghi nhớ tư thế của bạn.</div>
                 <button id="btnFinish" class="btn-action btn-blue mt-2">Bắt đầu Giám Sát</button>
             </div>
         </div>
 
-        <!-- SETTINGS MENU -->
+        <!-- SETTINGS -->
         <div id="settingsMenu" class="settings-menu">
             <div class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Cài đặt</div>
             <button id="menuMute" class="menu-item"><span>🔊</span> <span id="txtMute">Âm thanh: BẬT</span></button>
             <div class="setting-group">
-                <div class="setting-label"><span>Độ trễ báo động (Ngủ)</span><span id="delayVal" class="setting-value">1.0s</span></div>
+                <div class="setting-label"><span>Độ trễ báo động</span><span id="delayVal" class="setting-value">1.0s</span></div>
                 <input type="range" id="delaySlider" min="20" max="60" step="5" value="30">
             </div>
             <button id="menuRetrain" class="menu-item"><span>🔄</span> Train lại từ đầu</button>
             <button id="menuReset" class="menu-item danger"><span>🗑️</span> Xóa dữ liệu cũ</button>
         </div>
 
-        <!-- BOTTOM CONTROLS -->
         <div id="bottomControls" class="absolute bottom-5 right-5 flex gap-2 hidden z-40">
             <button id="btnQuickMute" class="btn-round">🔊</button>
             <button id="btnOpenSettings" class="btn-round">⚙️</button>
@@ -281,14 +237,12 @@
     </div>
 
     <script>
-        // === STATE ===
         const APP = {
             mode: 'IDLE', 
             config: {
                 avgOpen: 0.35, avgClosed: 0.15, eyeThreshold: 0.25,
-                centerPitch: 0, centerYaw: 0, 
-                framesToAlarm: 30, // 1s
-                distractionFrames: 60, // 2s
+                calibratedPitch: 0, calibratedYaw: 0,
+                framesToAlarm: 30, distractionFrames: 60
             },
             runtime: {
                 currentEAR: 0, currentPitch: 0, currentYaw: 0,
@@ -296,7 +250,7 @@
                 isAlarming: false, isMuted: false, warningType: null,
                 recentSlowBlinks: []
             },
-            trainData: []
+            tempTrainData: [], calibData: { pitch: 0, yaw: 0, count: 0 }
         };
 
         const INDICES = { 
@@ -304,37 +258,26 @@
             NOSE: 1, CHIN: 152, FOREHEAD: 10, LEFT_CHEEK: 234, RIGHT_CHEEK: 454
         };
         
-        // UI
         const UI = {
-            video: document.querySelector('.input_video'),
-            canvas: document.querySelector('.output_canvas'),
+            video: document.querySelector('.input_video'), canvas: document.querySelector('.output_canvas'),
             ctx: document.querySelector('.output_canvas').getContext('2d'),
-            scanner: document.getElementById('scanner'),
-            countdownBox: document.getElementById('countdownBox'), countNum: document.getElementById('countNum'),
-            
-            trainingContainer: document.getElementById('trainingContainer'),
-            stepWelcome: document.getElementById('stepWelcome'),
-            stepInstructOpen: document.getElementById('stepInstructOpen'),
-            stepInstructClosed: document.getElementById('stepInstructClosed'),
+            scanner: document.getElementById('scanner'), countdownBox: document.getElementById('countdownBox'), countNum: document.getElementById('countNum'),
+            trainingContainer: document.getElementById('trainingContainer'), stepWelcome: document.getElementById('stepWelcome'),
+            stepInstructOpen: document.getElementById('stepInstructOpen'), stepInstructClosed: document.getElementById('stepInstructClosed'),
             stepProcessing: document.getElementById('stepProcessing'), stepSuccess: document.getElementById('stepSuccess'),
-            
             progressBar: document.getElementById('progressBar'), processTitle: document.getElementById('processTitle'),
-            foundDataBox: document.getElementById('foundDataBox'), btnUseOld: document.getElementById('btnUseOld'),
-            
+            calibMsg: document.getElementById('calibMsg'), foundDataBox: document.getElementById('foundDataBox'), btnUseOld: document.getElementById('btnUseOld'),
             monitorBar: document.getElementById('monitorBar'), barCursor: document.getElementById('barCursor'),
             threshLine: document.getElementById('threshLine'), monitorStatus: document.getElementById('monitorStatus'),
-            headDot: document.getElementById('headDot'),
+            headCompass: document.getElementById('headCompass'), headDot: document.getElementById('headDot'),
             dots: [document.getElementById('dot1'), document.getElementById('dot2'), document.getElementById('dot3')],
-            
             alarmScreen: document.getElementById('alarmScreen'), warningOverlay: document.getElementById('warningOverlay'),
             warnIcon: document.getElementById('warnIcon'), warnTitle: document.getElementById('warnTitle'), warnSub: document.getElementById('warnSub'),
-            
             bottomControls: document.getElementById('bottomControls'), settingsMenu: document.getElementById('settingsMenu'),
             btnQuickMute: document.getElementById('btnQuickMute'), txtMute: document.getElementById('txtMute'),
             delaySlider: document.getElementById('delaySlider'), delayVal: document.getElementById('delayVal')
         };
 
-        // === UTILS ===
         function speak(text) { if ('speechSynthesis' in window) { window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'vi-VN'; window.speechSynthesis.speak(u); } }
         function showStep(stepId) { [UI.stepWelcome, UI.stepInstructOpen, UI.stepInstructClosed, UI.stepProcessing, UI.stepSuccess].forEach(el => el.classList.add('hidden')); document.getElementById(stepId).classList.remove('hidden'); }
         function dist(p1, p2) { return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2)); }
@@ -354,28 +297,23 @@
             return { pitch, yaw };
         }
 
-        // === STORAGE ===
         function checkStorage() {
-            const data = localStorage.getItem('dm_v15_final');
+            const data = localStorage.getItem('dm_v18_final');
             if (data) { 
                 APP.config = { ...APP.config, ...JSON.parse(data) }; 
                 UI.delaySlider.value = APP.config.framesToAlarm; updateDelayVal(APP.config.framesToAlarm);
                 UI.foundDataBox.classList.remove('hidden'); UI.btnUseOld.classList.remove('hidden'); 
             }
         }
-        function saveConfig() { localStorage.setItem('dm_v15_final', JSON.stringify(APP.config)); }
-        function clearConfig() { localStorage.removeItem('dm_v15_final'); location.reload(); }
+        function saveConfig() { localStorage.setItem('dm_v18_final', JSON.stringify(APP.config)); }
+        function clearConfig() { localStorage.removeItem('dm_v18_final'); location.reload(); }
 
-        // === AUDIO ===
         let audioCtx, osc;
         function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-        
         function playTone(type) {
             if(APP.runtime.isMuted) return;
             if(audioCtx?.state === 'suspended') audioCtx.resume();
-            
             const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination);
-            
             if (type === 'FATIGUE') { 
                 o.type = 'sine'; o.frequency.setValueAtTime(880, audioCtx.currentTime); 
                 g.gain.setValueAtTime(0.5, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.0);
@@ -394,49 +332,53 @@
         }
         function stopAlarm() { if(osc) { try{ osc.stop(); osc.disconnect(); }catch(e){} osc = null; } APP.runtime.isAlarming = false; }
 
-        // === LOGIC ===
         function startCountdown(onComplete) {
             UI.countdownBox.classList.remove('hidden'); let count = 3; UI.countNum.innerText = count; speak("3");
             const t = setInterval(() => { count--; if(count>0){UI.countNum.innerText=count;speak(count.toString());}else{clearInterval(t);UI.countdownBox.classList.add('hidden');speak("Bắt đầu");onComplete();} }, 1000);
         }
 
-        async function runCapture(mode) {
-            APP.mode = mode; APP.trainData = [];
-            showStep('stepProcessing'); UI.scanner.classList.remove('hidden');
-            UI.processTitle.innerText = mode === 'TRAIN_OPEN' ? "Giữ đầu thẳng & Mở mắt..." : "Nhắm mắt & Quay đầu...";
-
-            let captureCenter = (mode === 'TRAIN_OPEN');
-            let pitchSum = 0, yawSum = 0, centerCount = 0;
-
-            const duration = 5000; const start = Date.now();
-            if(captureCenter) speak("Nhìn thẳng vào camera");
-
-            while (Date.now() - start < duration) {
-                const elapsed = Date.now() - start;
-                UI.progressBar.style.width = `${(elapsed / duration) * 100}%`;
-                
-                // Calibration for Head Pose (First 1.5s of Open Eye)
-                if (captureCenter && elapsed < 1500) {
-                    pitchSum += APP.runtime.currentPitch; yawSum += APP.runtime.currentYaw; centerCount++;
-                }
-                
-                // For training, we push EAR in onResults loop to APP.trainData
-                await new Promise(r => requestAnimationFrame(r));
-            }
-            UI.scanner.classList.add('hidden');
-
-            // Calculate Average EAR from Collected Data
-            const avgEAR = APP.trainData.reduce((a,b)=>a+b,0) / (APP.trainData.length || 1);
+        function runCapture(mode) {
+            APP.mode = mode; 
+            APP.tempTrainData = []; 
+            APP.calibData = { pitch: 0, yaw: 0, count: 0 };
             
+            showStep('stepProcessing'); UI.scanner.classList.remove('hidden');
+            UI.processTitle.innerText = mode === 'TRAIN_OPEN' ? "Giữ tư thế lái xe..." : "Nhắm mắt & Quay đầu...";
+            UI.progressBar.style.width = '0%';
+
+            let captureCalib = (mode === 'TRAIN_OPEN');
+            if(captureCalib) { UI.calibMsg.classList.remove('hidden'); speak("Nhìn thẳng đường"); }
+
+            const duration = 5000; 
+            const start = Date.now();
+            
+            const loop = () => {
+                const elapsed = Date.now() - start;
+                const pct = Math.min(100, (elapsed / duration) * 100);
+                UI.progressBar.style.width = `${pct}%`;
+                if (captureCalib && elapsed > 2000 && elapsed < 2100) {
+                     UI.calibMsg.classList.add('hidden'); UI.processTitle.innerText = "Giờ hãy quay đầu...";
+                }
+                if (elapsed < duration) requestAnimationFrame(loop);
+                else finishCapture(mode);
+            };
+            loop();
+        }
+
+        function finishCapture(mode) {
+            UI.scanner.classList.add('hidden'); UI.calibMsg.classList.add('hidden');
+            const avgEAR = APP.tempTrainData.reduce((a,b)=>a+b,0) / (APP.tempTrainData.length || 1);
             if (mode === 'TRAIN_OPEN') {
                 APP.config.avgOpen = avgEAR;
-                if(centerCount > 0) { APP.config.centerPitch = pitchSum / centerCount; APP.config.centerYaw = yawSum / centerCount; }
+                if(APP.calibData.count > 0) {
+                    APP.config.calibratedPitch = APP.calibData.pitch / APP.calibData.count;
+                    APP.config.calibratedYaw = APP.calibData.yaw / APP.calibData.count;
+                }
                 speak("Xong bước 1"); showStep('stepInstructClosed');
             } else {
                 APP.config.avgClosed = avgEAR;
                 APP.config.eyeThreshold = (APP.config.avgOpen + APP.config.avgClosed) / 2;
-                // Safety check: Avoid division by zero if values are identical
-                if (Math.abs(APP.config.avgOpen - APP.config.avgClosed) < 0.01) {
+                if (Math.abs(APP.config.avgOpen - APP.config.avgClosed) < 0.01) { 
                     APP.config.avgClosed = 0.15; APP.config.avgOpen = 0.35; APP.config.eyeThreshold = 0.25;
                 }
                 saveConfig();
@@ -449,44 +391,57 @@
             UI.trainingContainer.classList.add('hidden');
             UI.monitorBar.classList.remove('opacity-0', 'pointer-events-none');
             UI.bottomControls.classList.remove('hidden');
-            
-            let range = APP.config.avgOpen - APP.config.avgClosed;
-            if(range <= 0) range = 0.1; // Prevent div/0
+            let range = APP.config.avgOpen - APP.config.avgClosed; if(range <= 0) range = 0.1;
             let pct = (APP.config.eyeThreshold - APP.config.avgClosed) / range;
             UI.threshLine.style.left = `${Math.max(5, Math.min(95, pct * 100))}%`;
-            
             APP.runtime.closedCounter = 0; APP.runtime.distractionCounter = 0; APP.runtime.recentSlowBlinks = [];
         }
 
         function processMonitor(ear, pitch, yaw) {
-            // --- 1. EYE PROCESSING (Exact v12 Logic) ---
+            // EYES
             APP.runtime.currentEAR = (APP.runtime.currentEAR * 0.7) + (ear * 0.3);
-            
-            let range = APP.config.avgOpen - APP.config.avgClosed;
-            if(range <= 0) range = 0.2; // Fallback
-            
+            let range = APP.config.avgOpen - APP.config.avgClosed; if(range <= 0) range = 0.2;
             let percent = (APP.runtime.currentEAR - APP.config.avgClosed) / range;
-            percent = percent * 100;
-            UI.barCursor.style.left = `${Math.max(0, Math.min(100, percent))}%`;
+            UI.barCursor.style.left = `${Math.max(0, Math.min(100, percent * 100))}%`;
 
-            // --- 2. HEAD PROCESSING ---
-            APP.runtime.currentPitch = pitch; APP.runtime.currentYaw = yaw;
-            const pDiff = pitch - APP.config.centerPitch;
-            const yDiff = yaw - APP.config.centerYaw;
-            let topPos = 50 + (pDiff * 300); let leftPos = 50 + (yDiff * 300);
+            // HEAD - SYNC VISUALS WITH LOGIC
+            const pDiff = pitch - APP.config.calibratedPitch;
+            const yDiff = yaw - APP.config.calibratedYaw;
+            
+            // Logic Threshold = 0.12 (approx 12 degrees)
+            const HEAD_THRESH = 0.12;
+            
+            // Map logic threshold to CSS displacement
+            // We want 0.12 to equal 10px visual displacement (edge of safe zone)
+            // Compass is 50px wide -> 10px = 20%
+            // Multiplier = 20 / 0.12 = ~170
+            let topPos = 50 + (pDiff * 170); 
+            let leftPos = 50 + (yDiff * 170);
+            
             const limit = (val) => Math.max(10, Math.min(90, val));
             UI.headDot.style.top = `${limit(topPos)}%`; UI.headDot.style.left = `${limit(leftPos)}%`;
-            const isDistracted = (Math.abs(pDiff) > 0.15 || Math.abs(yDiff) > 0.15);
-            UI.headDot.style.backgroundColor = isDistracted ? '#ef4444' : '#3b82f6';
 
-            // --- LOGIC TREE ---
+            const isDistracted = (Math.abs(pDiff) > HEAD_THRESH || Math.abs(yDiff) > HEAD_THRESH);
+            
+            // Immediate Visual Feedback
+            if (isDistracted) {
+                UI.headDot.style.backgroundColor = '#ef4444';
+                UI.headCompass.classList.add('warning'); // Orange border
+            } else {
+                UI.headDot.style.backgroundColor = '#3b82f6';
+                UI.headCompass.classList.remove('warning');
+            }
+
+            // LOGIC
             if (APP.runtime.currentEAR < APP.config.eyeThreshold) {
-                // CLOSED
+                // EYES CLOSED
                 APP.runtime.closedCounter++;
                 UI.barCursor.style.background = '#ef4444';
-                APP.runtime.distractionCounter = 0; 
+                // CRITICAL FIX: Do NOT reset distraction counter here.
+                // Just pause it. Or let it run if head is still turned.
+                // Assuming people might blink while looking away.
             } else {
-                // OPEN
+                // EYES OPEN
                 if (APP.runtime.closedCounter > 0) {
                     const frames = APP.runtime.closedCounter;
                     if (frames >= 8 && frames < APP.config.framesToAlarm) {
@@ -499,32 +454,26 @@
                     }
                     updateFatigueDots();
                 }
-
                 APP.runtime.closedCounter = 0;
                 UI.barCursor.style.background = '#fff';
                 
-                if (isDistracted) APP.runtime.distractionCounter++; else APP.runtime.distractionCounter = 0;
+                // DISTRACTION COUNTER LOGIC (Only reset if looking straight)
+                if (isDistracted) APP.runtime.distractionCounter++; 
+                else APP.runtime.distractionCounter = 0; // Look straight = reset
 
-                if (APP.runtime.isAlarming && percent > 60) { stopAlarm(); UI.alarmScreen.classList.remove('alarm-active'); }
+                if (APP.runtime.isAlarming && percent * 100 > 60) { stopAlarm(); UI.alarmScreen.classList.remove('alarm-active'); }
                 if (APP.runtime.warningType === 'DISTRACTION' && !isDistracted) hideWarning();
-                if (APP.runtime.warningType === 'FATIGUE' && percent > 70) hideWarning();
+                if (APP.runtime.warningType === 'FATIGUE' && percent * 100 > 70) hideWarning();
             }
 
-            // TRIGGERS
             if (APP.runtime.closedCounter > APP.config.framesToAlarm) {
                 if (!APP.runtime.isAlarming) {
-                    APP.runtime.isAlarming = true;
-                    UI.alarmScreen.classList.add('alarm-active');
-                    playTone('ALARM');
-                    hideWarning();
+                    APP.runtime.isAlarming = true; UI.alarmScreen.classList.add('alarm-active'); playTone('ALARM'); hideWarning();
                 }
             } else if (APP.runtime.distractionCounter > APP.config.distractionFrames) {
-                if (!APP.runtime.isAlarming && APP.runtime.warningType !== 'DISTRACTION') {
-                    showWarning('DISTRACTION');
-                }
+                if (!APP.runtime.isAlarming && APP.runtime.warningType !== 'DISTRACTION') { showWarning('DISTRACTION'); }
             }
 
-            // STATUS TEXT
             if (APP.runtime.closedCounter > 0) UI.monitorStatus.innerHTML = "<span class='text-red-500'>⚠️ ĐANG NHẮM</span>";
             else if (APP.runtime.warningType === 'DISTRACTION') UI.monitorStatus.innerHTML = "<span class='text-orange-500'>👀 NHÌN ĐƯỜNG!</span>";
             else if (APP.runtime.warningType === 'FATIGUE') UI.monitorStatus.innerHTML = "<span class='text-yellow-400'>☕ MỆT MỎI</span>";
@@ -535,39 +484,32 @@
             const count = APP.runtime.recentSlowBlinks.length;
             UI.dots.forEach((d, i) => { if (i < count) d.classList.add('active'); else d.classList.remove('active'); });
         }
-
         function showWarning(type) {
-            APP.runtime.warningType = type;
-            UI.warningOverlay.classList.add('warning-active');
+            APP.runtime.warningType = type; UI.warningOverlay.classList.add('warning-active');
             if (type === 'DISTRACTION') {
                 UI.warningOverlay.className = "warning-overlay warn-orange warning-active";
-                UI.warnIcon.innerText = "👀"; UI.warnTitle.innerText = "NHÌN ĐƯỜNG"; UI.warnSub.innerText = "Không cúi/quay đầu";
-                playTone('DISTRACTION'); speak("Hãy nhìn đường.");
+                UI.warnIcon.innerText = "👀"; UI.warnTitle.innerText = "NHÌN ĐƯỜNG"; UI.warnSub.innerText = "Tập trung lái xe"; playTone('DISTRACTION'); speak("Hãy nhìn đường.");
             } else if (type === 'FATIGUE') {
                 UI.warningOverlay.className = "warning-overlay warn-yellow warning-active";
-                UI.warnIcon.innerText = "☕"; UI.warnTitle.innerText = "MỆT MỎI"; UI.warnSub.innerText = "Chớp mắt chậm nhiều";
-                playTone('FATIGUE'); speak("Bạn đang mệt.");
+                UI.warnIcon.innerText = "☕"; UI.warnTitle.innerText = "MỆT MỎI"; UI.warnSub.innerText = "Bạn chớp mắt chậm"; playTone('FATIGUE'); speak("Bạn đang mệt.");
             }
         }
         function hideWarning() { UI.warningOverlay.classList.remove('warning-active'); APP.runtime.warningType = null; }
 
-        // === LOOP ===
         function onResults(results) {
             UI.canvas.width = UI.video.videoWidth; UI.canvas.height = UI.video.videoHeight;
             UI.ctx.save(); UI.ctx.clearRect(0, 0, UI.canvas.width, UI.canvas.height); UI.ctx.drawImage(results.image, 0, 0, UI.canvas.width, UI.canvas.height);
             if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
                 const lm = results.multiFaceLandmarks[0];
                 const ear = getEAR(lm); const pose = getHeadPose(lm); 
-                
-                let meshColor = '#FFFFFF10'; 
-                if (APP.mode.startsWith('TRAIN')) meshColor = '#3b82f680';
+                let meshColor = '#FFFFFF10'; if (APP.mode.startsWith('TRAIN')) meshColor = '#3b82f680';
                 drawConnectors(UI.ctx, lm, FACEMESH_TESSELATION, {color: meshColor, lineWidth: 0.5});
                 
                 if (APP.mode.startsWith('TRAIN')) { 
-                    APP.trainData.push(ear); 
-                    // Update head tracking vars during loop for smoothing
-                    APP.runtime.currentPitch = pose.pitch; 
-                    APP.runtime.currentYaw = pose.yaw;
+                    APP.tempTrainData.push(ear);
+                    if (APP.mode === 'TRAIN_OPEN' && !UI.calibMsg.classList.contains('hidden')) {
+                        APP.calibData.pitch += pose.pitch; APP.calibData.yaw += pose.yaw; APP.calibData.count++;
+                    }
                 } else if (APP.mode === 'MONITOR') { 
                     processMonitor(ear, pose.pitch, pose.yaw); 
                     const col = APP.runtime.currentEAR < APP.config.eyeThreshold ? '#ef4444' : '#22c55e';
@@ -577,7 +519,6 @@
             UI.ctx.restore();
         }
 
-        // === INIT ===
         const faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
         faceMesh.setOptions({maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5});
         faceMesh.onResults(onResults);
