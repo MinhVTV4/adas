@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Driver Monitor v18 (Sync Fixed)</title>
+    <title>Driver Monitor v19 (Smart Timing)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- MediaPipe Libraries -->
@@ -180,8 +180,8 @@
         <!-- TRAINING UI -->
         <div id="trainingContainer">
             <div id="stepWelcome" class="glass-panel top-instruction-box">
-                <h1 class="text-xl font-bold text-blue-400">Driver Monitor v18</h1>
-                <p class="text-gray-300 text-xs">Sync Fixed & Memory Patch</p>
+                <h1 class="text-xl font-bold text-blue-400">Driver Monitor v19</h1>
+                <p class="text-gray-300 text-xs">Smart Timing & Real-World Calibration</p>
                 <div id="foundDataBox" class="hidden bg-green-500/20 border border-green-500/50 p-2 rounded text-green-300 text-xs text-left">✨ Đã có dữ liệu cũ.</div>
                 <div class="flex gap-2 w-full mt-2">
                     <button id="btnUseOld" class="btn-action btn-green hidden text-sm">Dùng dữ liệu cũ</button>
@@ -242,7 +242,9 @@
             config: {
                 avgOpen: 0.35, avgClosed: 0.15, eyeThreshold: 0.25,
                 calibratedPitch: 0, calibratedYaw: 0,
-                framesToAlarm: 30, distractionFrames: 60
+                framesToAlarm: 30, 
+                // Increased distraction tolerance to ~3 seconds
+                distractionFrames: 90 
             },
             runtime: {
                 currentEAR: 0, currentPitch: 0, currentYaw: 0,
@@ -298,15 +300,15 @@
         }
 
         function checkStorage() {
-            const data = localStorage.getItem('dm_v18_final');
+            const data = localStorage.getItem('dm_v19_smart');
             if (data) { 
                 APP.config = { ...APP.config, ...JSON.parse(data) }; 
                 UI.delaySlider.value = APP.config.framesToAlarm; updateDelayVal(APP.config.framesToAlarm);
                 UI.foundDataBox.classList.remove('hidden'); UI.btnUseOld.classList.remove('hidden'); 
             }
         }
-        function saveConfig() { localStorage.setItem('dm_v18_final', JSON.stringify(APP.config)); }
-        function clearConfig() { localStorage.removeItem('dm_v18_final'); location.reload(); }
+        function saveConfig() { localStorage.setItem('dm_v19_smart', JSON.stringify(APP.config)); }
+        function clearConfig() { localStorage.removeItem('dm_v19_smart'); location.reload(); }
 
         let audioCtx, osc;
         function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
@@ -404,7 +406,7 @@
             let percent = (APP.runtime.currentEAR - APP.config.avgClosed) / range;
             UI.barCursor.style.left = `${Math.max(0, Math.min(100, percent * 100))}%`;
 
-            // HEAD - SYNC VISUALS WITH LOGIC
+            // HEAD
             const pDiff = pitch - APP.config.calibratedPitch;
             const yDiff = yaw - APP.config.calibratedYaw;
             
@@ -412,9 +414,6 @@
             const HEAD_THRESH = 0.12;
             
             // Map logic threshold to CSS displacement
-            // We want 0.12 to equal 10px visual displacement (edge of safe zone)
-            // Compass is 50px wide -> 10px = 20%
-            // Multiplier = 20 / 0.12 = ~170
             let topPos = 50 + (pDiff * 170); 
             let leftPos = 50 + (yDiff * 170);
             
@@ -444,10 +443,12 @@
                 // EYES OPEN
                 if (APP.runtime.closedCounter > 0) {
                     const frames = APP.runtime.closedCounter;
-                    if (frames >= 8 && frames < APP.config.framesToAlarm) {
+                    // Slow Blink: Requires at least 12 frames (~0.4s) to prevent false positives from lazy blinks
+                    if (frames >= 12 && frames < APP.config.framesToAlarm) {
                         const now = Date.now();
                         APP.runtime.recentSlowBlinks.push(now);
-                        APP.runtime.recentSlowBlinks = APP.runtime.recentSlowBlinks.filter(t => now - t < 10000);
+                        // Increased window to 15s to detect patterns over longer duration
+                        APP.runtime.recentSlowBlinks = APP.runtime.recentSlowBlinks.filter(t => now - t < 15000);
                         if (APP.runtime.recentSlowBlinks.length >= 3 && !APP.runtime.isAlarming && APP.runtime.warningType !== 'FATIGUE') {
                             showWarning('FATIGUE');
                         }
